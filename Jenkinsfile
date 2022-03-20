@@ -13,7 +13,7 @@ pipeline {
     stages {
         stage('Restore packages'){
            steps{
-               sh 'sudo dotnet restore WebApplication.sln'
+               sh 'dotnet restore WebApplication.sln'
             }
          }        
         stage('Clean'){
