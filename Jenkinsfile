@@ -11,11 +11,13 @@ pipeline {
         githubPush()
       }
     stages {
+        // Restores the dependencies and tools of a project 
         stage('Restore packages'){
            steps{
                sh 'dotnet restore WebApplication.sln'
             }
-         }        
+         }
+         // cleans the output of the previous build
         stage('Clean'){
            steps{
                sh 'dotnet clean WebApplication.sln --configuration Release'
@@ -31,11 +33,13 @@ pipeline {
                 sh 'dotnet test XUnitTestProject/XUnitTestProject.csproj --configuration Release --no-restore'
              }
           }
+         // Publishes the application and its dependencies to a folder for deployment to a hosting system
         stage('Publish'){
              steps{
                sh 'dotnet publish WebApplication/WebApplication.csproj --configuration Release --no-restore'
              }
         }
+         // Running the application in the background
         stage('Deploy'){
              steps{
                sh '''for pid in $(lsof -t -i:9090); do
