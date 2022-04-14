@@ -36,7 +36,9 @@ pipeline {
          // Publishes the application and its dependencies to a folder for deployment to a hosting system
         stage('Publish'){
              steps{
+               sh 'ls -a'
                sh 'dotnet publish WebApplication/WebApplication.csproj --configuration Release --no-restore'
+               sh 'ls -a'
              }
         }
          // Running the application in the background
