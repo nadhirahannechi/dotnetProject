@@ -32,7 +32,7 @@ pipeline {
        }
     stage('Publish') { 
        steps { 
-           sh 'dotnet test XUnitTestProject/XUnitTestProject.csproj --configuration Release --no-restore' 
+           sh 'dotnet push XUnitTestProject/XUnitTestProject.csproj --configuration Release --no-restore' 
           }
     }
     stage('Archive') { 
