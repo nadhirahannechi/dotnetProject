@@ -1,55 +1,73 @@
-pipeline {
-     agent {
-        docker {
-            image 'mcr.microsoft.com/dotnet/sdk:6.0'
-        }
-     }
-     environment {
-    DOTNET_CLI_HOME = "/tmp/DOTNET_CLI_HOME"
-}
-     triggers {
-        githubPush()
+pipeline { 
+   agent { 
+       docker { 
+           image 'mcr.microsoft.com/dotnet/sdk:6.0' 
+       } 
+   } 
+   environment { 
+       DOTNET_CLI_HOME = "/tmp/DOTNET_CLI_HOME" 
+   } 
+   stages { 
+       stage('Restore packages') { 
+          steps { 
+             sh 'dotnet restore WebApplication.sln' 
+          } 
+       } 
+       stage('Clean') { 
+          steps { 
+               sh 'dotnet clean WebApplication.sln --configuration Release' 
+          } 
+       } 
+ 
+ stage('Test: Unit Test') { 
+    steps { 
+        sh 'dotnet test XUnitTestProject/XUnitTestProject.csproj --configuration Release --no-restore' 
       }
-    stages {
-        // Restores the dependencies and tools of a project 
-        stage('Restore packages'){
-           steps{
-               sh 'dotnet restore WebApplication.sln'
-            }
-         }
-         // cleans the output of the previous build
-        stage('Clean'){
-           steps{
-               sh 'dotnet clean WebApplication.sln --configuration Release'
-            }
-         }
-        stage('Build'){
-           steps{
-               sh 'dotnet build WebApplication.sln --configuration Release --no-restore'
-            }
-         }
-   stage('Test: Unit Test'){
-           steps {
-                sh 'dotnet test XUnitTestProject/XUnitTestProject.csproj --configuration Release --no-restore'
-             }
-          }
-         // Publishes the application and its dependencies to a folder for deployment to a hosting system
-        stage('Publish'){
-             steps{
-               sh 'ls -a'
-               sh 'dotnet publish WebApplication/WebApplication.csproj --configuration Release --no-restore'
-               sh 'ls -a'
-             }
-        }
-         // Running the application in the background
-        stage('Deploy'){
-             steps{
-               sh '''for pid in $(lsof -t -i:9090); do
-                       kill -9 $pid
-               done'''
-               sh 'cd WebApplication/bin/Release/netcoreapp3.1/publish/'
-               sh 'nohup dotnet WebApplication.dll --urls="http://104.128.91.189:9090" --ip="104.128.91.189" --port=9090 --no-restore > /dev/null 2>&1 &'
-             }
-        }        
     }
+ 
+    stage('Build') { 
+       steps { 
+          sh 'dotnet build WebApplication.sln --configuration Release --no-restore' 
+          } 
+       }
+    stage('Publish') { 
+       steps { 
+           sh 'dotnet test XUnitTestProject/XUnitTestProject.csproj --configuration Release --no-restore' 
+          }
+    }
+    stage('Archive') { 
+       steps { 
+           sh 'tar -cvzf WebApplication/bin/Release/netcoreapp3.1/publish --strip-components=1 publish' 
+           archive 'publish.tar.gz' 
+          } 
+       }
+    
+   stage('Nexus Upload Stage') {
+     agent none 
+     steps { 
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'nexus_manvenuser',usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+               sh 'curl -v -u ${USERNAME}:${PASSWORD} --upload-file publish.tar.gz http://artefact.focus.com.tn:8081/repository/aspNet/publish.tar.gz' 
+           } 
+       } 
+   } 
+
+    stage('Deploy Stage') {
+      steps { 
+      sh 'ls -a'
+      timeout(time: 200, unit: 'SECONDS') {
+          dir('WebApplication/bin/Release/netcoreapp3.1/publish') {
+          sh 'ls' 
+          sh 'cp ../../../../../manifest.yml manifest.yml'
+          pushToCloudFoundry(
+              target: 'https://api.cf.us10.hana.ondemand.com/',
+               organization: '2b1f4fe8trial',
+               cloudSpace: 'dev',
+                credentialsId: 'nadhira',
+               )
+        }
+      }
+    }
+   }
+  }
 }
+   
