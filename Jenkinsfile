@@ -19,29 +19,29 @@ pipeline {
           } 
        } 
  
+ stage('Test: Unit Test') { 
+    steps { 
+        sh 'dotnet test XUnitTestProject/XUnitTestProject.csproj --configuration Release --no-restore' 
+      }
+    }
+ 
     stage('Build') { 
        steps { 
           sh 'dotnet build WebApplication.sln --configuration Release --no-restore' 
           } 
        }
- /*stage('Test: Unit Test') { 
-    steps { 
-        sh 'dotnet test XUnitTestProject/XUnitTestProject.csproj --configuration Release --no-restore' 
-      }
-    }*/
- 
     stage('Publish') { 
        steps { 
-           sh 'dotnet publish WebApplication/WebApplication.csproj --configuration Release --no-restore' 
-          } 
-        } 
+           sh 'dotnet test XUnitTestProject/XUnitTestProject.csproj --configuration Release --no-restore' 
+          }
+    }
     stage('Archive') { 
        steps { 
            sh 'tar -cvzf publish.tar.gz --strip-components=1 WebApplication/bin/Release/netcoreapp3.1/publish' 
            archive 'publish.tar.gz' 
           } 
-       } 
-
+       }
+    
    stage('Nexus Upload Stage') {
      agent none 
      steps { 
@@ -57,7 +57,7 @@ pipeline {
       timeout(time: 200, unit: 'SECONDS') {
           dir('WebApplication/bin/Release/netcoreapp3.1/publish') {
           sh 'ls' 
-          sh 'cp ../../../../../manifest.yml manifest.yml' 
+          sh 'cp ../../../../../manifest.yml manifest.yml'
           pushToCloudFoundry(
               target: 'https://api.cf.us10.hana.ondemand.com/',
                organization: '2b1f4fe8trial',
