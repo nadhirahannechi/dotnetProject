@@ -37,7 +37,7 @@ pipeline {
     }
     stage('Archive') { 
        steps { 
-           sh 'tar -cvzf WebApplication/bin/Release/netcoreapp3.1/publish --strip-components=1 publish' 
+           sh 'tar -cvzf publish.tar.gz--strip-components=1 WebApplication/bin/Release/netcoreapp3.1/publish' 
            archive 'publish.tar.gz' 
           } 
        }
