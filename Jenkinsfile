@@ -28,7 +28,7 @@ pipeline {
                sh 'dotnet build WebApplication.sln --configuration Release --no-restore'
             }
          }
-        stage('Test: Unit Test'){
+   stage('Test: Unit Test'){
            steps {
                 sh 'dotnet test XUnitTestProject/XUnitTestProject.csproj --configuration Release --no-restore'
              }
