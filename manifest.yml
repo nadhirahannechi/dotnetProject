@@ -1,6 +1,6 @@
 ---
 applications:
-- name: dotnet-pipelines
+- name: pfe-dotnet
   buildpack: https://github.com/cloudfoundry/dotnet-core-buildpack.git
   instance: 1
   memory: 30M
